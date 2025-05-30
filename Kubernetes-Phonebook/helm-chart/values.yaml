@@ -1,0 +1,4 @@
+webserver:
+  image: jonas034/web_server:latest
+resultserver:
+  image: jonas034/result_server:latest

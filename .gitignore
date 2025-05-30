@@ -1,0 +1,48 @@
+# Genel
+.venv/
+__pycache__/
+*.log
+.pytest_cache/
+.mypy_cache/
+.idea/
+.vscode/
+
+# Terraform
+/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/.terraform/
+/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/terraform.tfstate
+/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/terraform.tfstate.*
+/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/.terraform.lock.hcl
+
+# Ansible
+.venv/
+*.retry
+__pycache__/
+.molecule/
+.pytest_cache/
+.mypy_cache/
+.idea/
+.vscode/
+
+
+# Helm chart paketleri
+*.tgz
+# Helm release output
+.release/
+
+# Jenkins workspace/build klasörleri
+jenkins_home/
+workspace/
+builds/
+*.log
+
+# Docker local dosyaları
+*.pid
+
+# Kubernetes secret ve config dump dosyaları
+*.secret.yaml
+*.config.yaml
+
+.vscode/
+.idea/
+
+

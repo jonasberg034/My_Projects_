@@ -1,0 +1,188 @@
+Hva er PV og PVC?
+
+PV (Persistent Volume) er en fast lagringsplass i Kubernetes.
+PVC (Persistent Volume Claim) er en forespørsel om lagringsplass fra en applikasjon.
+Hvorfor trenger vi en MySQL pod?
+
+PV og PVC gir bare lagringsplass.
+MySQL pod kjører selve databasen og bruker PVC for å lagre dataene sine.
+Hvorfor lagre data på PV?
+
+Pods er midlertidige i Kubernetes.
+Hvis en pod slettes, forsvinner data hvis man ikke bruker PV/PVC.
+Med PV/PVC kan en ny MySQL pod bruke samme data etterpå.
+Hva skjer hvis vi bare har PV og PVC?
+
+Da har vi bare tom lagringsplass.
+Vi trenger MySQL pod for å faktisk ha en database som fungerer.
+Hvordan fungerer det sammen?
+
+En PV blir laget (for eksempel 10GB disk).
+En PVC ber om plass på denne disken.
+MySQL pod kobler PVC til mappen der data lagres.
+MySQL lagrer data på denne disken.
+Hvis pod’en slettes, kan en ny pod bruke samme PVC og finne de gamle dataene.
+
+Forklaring av Dockerfile:
+
+FROM python:alpine
+Denne linjen sier hvilket bilde (image) vi skal bruke.
+Her bruker vi Python på Alpine Linux, som er et lite og raskt system.
+
+COPY . /app
+Denne kommandoen kopierer alle filene i mappen din til en mappe som heter /app inni containeren.
+
+WORKDIR /app
+Dette gjør at arbeidsområdet i containeren blir /app. Alle kommandoer etter dette skjer i denne mappen.
+
+RUN pip install -r requirements.txt
+Her installerer vi alle Python-pakker som står i requirements.txt-filen.
+
+EXPOSE 80
+Denne linjen åpner port 80 så applikasjonen kan nås fra utsiden (for eksempel for en webside).
+
+CMD python app.py
+Dette er kommandoen som starter når containeren kjører.
+Her starter vi Python-programmet app.py.
+
+Oppsummering:
+Denne Dockerfile lager et lite miljø hvor Python-programmet ditt kan kjøre, 
+installerer nødvendige pakker, og starter programmet når containeren kjøres. 
+Port 80 åpnes slik at brukere kan nå applikasjonen.
+
+
+
+Skriv Dockerfile
+Bygg et bilde med docker build
+Push et Repo (ECR eller DockerHub)
+Start en container fra bildet med docker run
+
+Master Node'da ~/.kube/config dosyasini kendi bilgisayarina kopyla. 
+
+* Her iki label esit olmali
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: phonebook-app-pod
+  template:
+    metadata:
+      name: phonebook-app-pod
+      labels:
+        name: phonebook-app-pod
+
+
+* containerPort: 80 angir hvilken port applikasjonen inne i containeren lytter på. 
+For å få tilgang utenfra, må trafikken videresendes til denne porten via en Service.
+
+* Litt og sensitiv data → env
+Mye og samlet data → envFrom
+
+Vanligvis bruker man env for Secret (hemmelig data), og envFrom for ConfigMap (konfigurasjonsdata).
+Du kan også bruke begge sammen, hvis du trenger det.
+
+* Å skrive port: 80 betyr at vi spesifiserer hvilken port andre podder inne i clusteren skal bruke for å nå denne tjenesten (servicen).
+
+port: 80
+Dette er porten til selve servicen. Hvis en annen pod i clusteren vil kommunisere med denne servicen, kan den bruke phonebook-service:80.
+
+targetPort: 80
+Dette er porten inne i podden (containeren) som trafikken skal videresendes til.
+
+Med andre ord:
+
+Tilgang utenfra: <Node_IP>:30001
+
+Tilgang fra innsiden av clusteret: phonebook-service:80
+(Her er 80 service-porten.)
+
+Kort sagt:
+
+port: 80 er for servicen,
+
+targetPort: 80 er for podden.
+
+
+
+* I Kubernetes finnes det flere typer tjenester (services):
+
+- ClusterIP
+
+Dette er standardtypen.
+
+Tjenesten kan bare nås fra innsiden av clusteret (ikke fra utsiden).
+
+- NodePort
+
+Åpner en bestemt port (f.eks. 30001) på hver node.
+
+Du kan få tilgang utenfra med <Node_IP>:NodePort.
+
+- LoadBalancer
+
+Brukes i skytjenester (som AWS, Azure, GCP).
+
+Oppretter automatisk en ekstern IP og en lastbalanserer.
+
+Trafikken fordeles jevnt til poddene i bakgrunnen.
+
+- ExternalName
+
+Brukes til å peke til en ekstern tjeneste via DNS (mindre vanlig).
+
+Oppsummering:
+
+-ClusterIP: Kun intern tilgang
+
+- NodePort: Ekstern tilgang via node-port
+
+- LoadBalancer: Ekstern tilgang + automatisk lastbalansering
+
+- ExternalName: DNS-videresending
+
+I ditt eksempel brukes NodePort.
+Men i større systemer og i skyen er det vanlig å bruke LoadBalancer.
+
+* Ingress brukes i Kubernetes for å lede HTTP- og HTTPS-trafikk fra utsiden inn til tjenester (services) i clusteret.
+
+Hvorfor bruker man Ingress?
+Med NodePort eller LoadBalancer må man åpne en egen port for hver tjeneste. Dette kan bli komplisert og vanskelig å administrere.
+
+Med Ingress kan man bruke én felles inngang (vanligvis port 80 og 443) og sende trafikken videre til ulike tjenester basert på domenenavn eller URL-sti.
+
+Det er lett å legge til støtte for SSL/TLS (HTTPS).
+
+Gir mer sentralisert og fleksibel kontroll over trafikken.
+
+Oppsummert:
+Ingress brukes for å eksponere flere tjenester gjennom ett felles inngangspunkt (f.eks. myapp.com/api, myapp.com/web).
+
+Det er den mest profesjonelle og skalerbare måten å åpne tjenester mot internett i store og ekte produksjonsmiljøer.
+
+* / → webserver:80
+/result → resultserver:80
+şeklinde yönlendirme yapılır.
+Bu sayede tek bir giriş noktasından (Ingress) farklı path’ler farklı servislere gider.
+
+* /var/lib/mysql er en mappe som brukes inne i MySQL-containeren.
+Et volum kobles til denne mappen, slik at dataene lagres permanent.
+På denne måten blir ikke MySQL-dataene borte, selv om poden slettes.
+
+* Linjen hostPath: path: "/mnt/data" betyr at dette PersistentVolume skal bruke mappen /mnt/data på Kubernetes-noden (altså den fysiske eller virtuelle maskinen).
+
+Forklaring:
+hostPath:
+Gjør det mulig for volumet å bruke en bestemt mappe på nodens filsystem.
+
+path: "/mnt/data"
+/mnt/data-mappen på nodens disk er reservert for dette volumet.
+
+Resultat:
+Mappen /var/lib/mysql inne i MySQL-poden kobles til /mnt/data på noden.
+Dermed blir dataene lagret permanent på noden, selv om poden slettes.
+Denne metoden brukes ofte i test- og utviklingsmiljøer.
+I produksjon brukes vanligvis skylagring (cloud storage).
+
+
+
+
