@@ -138,9 +138,16 @@
     - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
     - chown ubuntu:ubuntu /home/ubuntu/.kube/config
 
-  - name: Install flannel pod network
-    remote_user: ubuntu
-    shell: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+  - name: Download flannel manifest
+    get_url:
+      url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      dest: /tmp/kube-flannel.yml
+
+  - name: Apply flannel manifest
+    shell: kubectl apply -f /tmp/kube-flannel.yml
+    become: true
+    environment:
+      KUBECONFIG: /etc/kubernetes/admin.conf
 
   - name: Generate join command
     become: true

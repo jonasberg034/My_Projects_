@@ -8,10 +8,10 @@ __pycache__/
 .vscode/
 
 # Terraform
-/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/.terraform/
-/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/terraform.tfstate
-/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/terraform.tfstate.*
-/mnt/c/E/Kendi-salvolarim/My_Projects/Kubernetes-Phonebook/server/Terraform/.terraform.lock.hcl
+/mnt/c/E/Kendi-salvolarim/My_Projects_/Kubernetes-Phonebook/server/Terraform/.terraform/
+/mnt/c/E/Kendi-salvolarim/My_Projects_/Kubernetes-Phonebook/server/Terraform/terraform.tfstate
+/mnt/c/E/Kendi-salvolarim/My_Projects_/Kubernetes-Phonebook/server/Terraform/terraform.tfstate.*
+/mnt/c/E/Kendi-salvolarim/My_Projects_/Kubernetes-Phonebook/server/Terraform/.terraform.lock.hcl
 
 # Ansible
 .venv/
