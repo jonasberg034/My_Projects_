@@ -178,6 +178,49 @@
       chmod 777 get_helm.sh
       ./get_helm.sh
 
+  - name: Install Ingress NGINX via Helm
+    hosts: role_master
+    become: true
+    tasks:
+
+    - name: Install dependencies for Helm
+      apt:
+        name:
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
+
+    - name: Install Helm
+      shell: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+        chmod +x get_helm.sh
+        ./get_helm.sh
+      args:
+        chdir: /home/ubuntu
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+    - name: Add ingress-nginx Helm repo
+      shell: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo update
+      environment:
+        HOME: /home/ubuntu
+
+    - name: Create namespace for ingress controller
+      shell: kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+    - name: Install ingress-nginx via Helm
+      shell: |
+        helm install ingress-nginx ingress-nginx/ingress-nginx \
+          --namespace ingress-nginx \
+          --set controller.service.type=NodePort
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+
 - hosts: role_worker
   become: true
   tasks:
