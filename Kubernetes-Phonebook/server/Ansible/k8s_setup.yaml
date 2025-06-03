@@ -107,6 +107,16 @@
       name: containerd
       state: restarted
       enabled: yes
+  - name: Load br_netfilter module
+    modprobe:
+      name: br_netfilter
+      state: present
+
+  - name: Ensure br_netfilter is persistent
+    lineinfile:
+      path: /etc/modules-load.d/k8s.conf
+      line: br_netfilter
+
 
   - name: Enable the nodes to see bridged traffic
     shell: |
@@ -140,7 +150,7 @@
 
   - name: Download flannel manifest
     get_url:
-      url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
       dest: /tmp/kube-flannel.yml
 
   - name: Apply flannel manifest
