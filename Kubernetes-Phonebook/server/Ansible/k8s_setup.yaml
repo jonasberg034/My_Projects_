@@ -208,31 +208,6 @@
       chdir: /home/ubuntu
     when: ansible_facts['distribution'] == 'Ubuntu'
 
-  - name: Add ingress-nginx Helm repo
-    become: true
-    shell: |
-      helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-      helm repo update
-    environment:
-      HOME: /root
-
-  - name: Create namespace for ingress controller
-    become: true
-    shell: kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
-    environment:
-      KUBECONFIG: /etc/kubernetes/admin.conf
-      HOME: /root
-
-  - name: Install ingress-nginx via Helm
-    become: true
-    shell: |
-      helm install ingress-nginx ingress-nginx/ingress-nginx \
-        --namespace ingress-nginx \
-         --set controller.service.type=NodePort
-    environment:
-      KUBECONFIG: /etc/kubernetes/admin.conf
-      HOME: /root
-
 - hosts: role_worker
   become: true
   tasks:
@@ -242,3 +217,43 @@
     register: result_of_joining
 
   - debug: msg='{{ result_of_joining.stdout }}'
+
+- hosts: role_master
+  become: true
+  tasks:
+    - name: Wait for worker nodes to be ready and labeled
+      shell: |
+        until kubectl get nodes --no-headers | grep Ready | grep -v control-plane; do 
+          sleep 5
+        done
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+    - name: Label worker nodes
+      shell: kubectl label node {{ item }} node-role.kubernetes.io/worker=""
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      loop: "{{ groups['role_worker'] }}"
+
+    - name: Add ingress-nginx Helm repo
+      shell: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo update
+      environment:
+        HOME: /root
+
+    - name: Create namespace for ingress controller
+      shell: kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+        HOME: /root
+
+    - name: Install ingress-nginx via Helm on worker nodes
+      shell: |
+        helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+          --namespace ingress-nginx \
+          --set controller.service.type=NodePort \
+          --set controller.nodeSelector."node-role\.kubernetes\.io/worker"=""
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+        HOME: /root
