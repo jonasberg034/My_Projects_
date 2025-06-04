@@ -179,7 +179,7 @@ resource "aws_instance" "worker-1" {
     }
 }
 
-resource "aws_instance" "worker-2" {
+ resource "aws_instance" "worker-2" {
     ami = var.ami_id
     instance_type = var.instance_type
     vpc_security_group_ids = [aws_security_group.petclinic_kube_worker_sg.id, aws_security_group.petclinic_mutual_sg.id]

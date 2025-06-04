@@ -31,6 +31,7 @@
       - curl
       - ca-certificates
       - software-properties-common
+    become: yes  
 
   - name: Ensure /etc/apt/keyrings directory exists with 755 permissions
     file:
@@ -71,6 +72,7 @@
         - docker.io
       state: present
       update_cache: yes
+    become: yes
 
   - name: Hold kubelet, kubeadm, kubectl at current version
     shell: "apt-mark hold {{ item }}"
@@ -107,15 +109,25 @@
       name: containerd
       state: restarted
       enabled: yes
+
   - name: Load br_netfilter module
     modprobe:
       name: br_netfilter
       state: present
 
+  - name: Ensure /etc/modules-load.d directory exists
+    file:
+      path: /etc/modules-load.d
+      state: directory
+      mode: '0755'
+      owner: root
+      group: root
+
   - name: Ensure br_netfilter is persistent
     lineinfile:
       path: /etc/modules-load.d/k8s.conf
       line: br_netfilter
+      create: yes
 
 
   - name: Enable the nodes to see bridged traffic
@@ -142,11 +154,11 @@
     
   - name: Setup kubeconfig for ubuntu user
     become: true
-    command: "{{ item }}"
-    with_items:
-    - mkdir -p /home/ubuntu/.kube
-    - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
-    - chown ubuntu:ubuntu /home/ubuntu/.kube/config
+    shell: |
+      set -x
+      mkdir -p /home/ubuntu/.kube
+      cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+      chown ubuntu:ubuntu /home/ubuntu/.kube/config
 
   - name: Download flannel manifest
     get_url:
@@ -171,55 +183,55 @@
       name: "kube_master"
       worker_join: "{{ join_command_for_workers.stdout.strip() }}"
 
-  - name: install Helm 
+  - name: Install Helm 
     shell: |
       cd /home/ubuntu
       curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
       chmod 777 get_helm.sh
       ./get_helm.sh
 
-  - name: Install Ingress NGINX via Helm
-    hosts: role_master
+  - name: Install dependencies for Helm
+    apt:
+      name:
+        - curl
+        - gnupg
+      state: present
+      update_cache: yes
+    become: yes
+
+  - name: Install Helm
+    shell: |
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+      chmod +x get_helm.sh
+      ./get_helm.sh
+    args:
+      chdir: /home/ubuntu
+    when: ansible_facts['distribution'] == 'Ubuntu'
+
+  - name: Add ingress-nginx Helm repo
     become: true
-    tasks:
+    shell: |
+      helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+      helm repo update
+    environment:
+      HOME: /root
 
-    - name: Install dependencies for Helm
-      apt:
-        name:
-          - curl
-          - gnupg
-        state: present
-        update_cache: yes
+  - name: Create namespace for ingress controller
+    become: true
+    shell: kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
+    environment:
+      KUBECONFIG: /etc/kubernetes/admin.conf
+      HOME: /root
 
-    - name: Install Helm
-      shell: |
-        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-        chmod +x get_helm.sh
-        ./get_helm.sh
-      args:
-        chdir: /home/ubuntu
-      when: ansible_facts['distribution'] == 'Ubuntu'
-
-    - name: Add ingress-nginx Helm repo
-      shell: |
-        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-        helm repo update
-      environment:
-        HOME: /home/ubuntu
-
-    - name: Create namespace for ingress controller
-      shell: kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
-      environment:
-        KUBECONFIG: /etc/kubernetes/admin.conf
-
-    - name: Install ingress-nginx via Helm
-      shell: |
-        helm install ingress-nginx ingress-nginx/ingress-nginx \
-          --namespace ingress-nginx \
-          --set controller.service.type=NodePort
-      environment:
-        KUBECONFIG: /etc/kubernetes/admin.conf
-
+  - name: Install ingress-nginx via Helm
+    become: true
+    shell: |
+      helm install ingress-nginx ingress-nginx/ingress-nginx \
+        --namespace ingress-nginx \
+         --set controller.service.type=NodePort
+    environment:
+      KUBECONFIG: /etc/kubernetes/admin.conf
+      HOME: /root
 
 - hosts: role_worker
   become: true

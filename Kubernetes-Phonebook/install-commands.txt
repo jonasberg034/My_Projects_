@@ -14,4 +14,4 @@ ansible-playbook -i dev_stack_dynamic_inventory_aws_ec2.yaml k8s_setup.yaml --pr
 *
 helm install phonebook-app ./phonebook-chart
 
-* curl iconfigme  IP adresi ogren!
+* curl ipconfigme  IP adresi ogren!
