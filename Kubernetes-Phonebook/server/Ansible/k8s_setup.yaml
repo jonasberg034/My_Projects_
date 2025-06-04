@@ -212,11 +212,22 @@
   become: true
   tasks:
 
-  - name: Join workers to cluster
-    shell: "{{ hostvars['kube_master']['worker_join'] }}"
-    register: result_of_joining
+    - name: Check if node is already joined to the cluster
+      stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf_check
 
-  - debug: msg='{{ result_of_joining.stdout }}'
+    - name: Join workers to cluster
+      shell: "{{ hostvars['kube_master']['worker_join'] }}"
+      when: not kubelet_conf_check.stat.exists
+      register: result_of_joining
+
+    - name: Show join result
+      debug:
+        msg: '{{ result_of_joining.stdout }}'
+      when: 
+        - result_of_joining is defined
+        - result_of_joining.stdout is defined
 
 - hosts: role_master
   become: true
@@ -229,11 +240,18 @@
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
 
-    - name: Label worker nodes
-      shell: kubectl label node {{ item }} node-role.kubernetes.io/worker=""
+    - name: Get all node names
+      shell: kubectl get nodes --no-headers -o custom-columns=":metadata.name"
+      register: node_names
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
-      loop: "{{ groups['role_worker'] }}"
+
+    - name: Label all nodes as worker (except master)
+      shell: kubectl label node {{ item }} node-role.kubernetes.io/worker=""
+      loop: "{{ node_names.stdout_lines }}"
+      when: "'master' not in item"
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
 
     - name: Add ingress-nginx Helm repo
       shell: |
