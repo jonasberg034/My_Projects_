@@ -15,3 +15,7 @@ ansible-playbook -i dev_stack_dynamic_inventory_aws_ec2.yaml k8s_setup.yaml --pr
 helm install phonebook-app ./phonebook-chart
 
 * curl ipconfigme or curl https://ifconfig.me  IP adresi ogren!
+
+* kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+n89obVwwMbU3Fvfv55wwNqgMfyRCX4NodETBQjuI
