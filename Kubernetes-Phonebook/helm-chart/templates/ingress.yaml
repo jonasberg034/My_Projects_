@@ -9,7 +9,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /
+      - path: /app
         pathType: Prefix
         backend:
           service:
@@ -23,3 +23,10 @@ spec:
             name: resultserver-service
             port:
               number: 80
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: kube-prometheus-stack-grafana
+            port:
+              number: 80              

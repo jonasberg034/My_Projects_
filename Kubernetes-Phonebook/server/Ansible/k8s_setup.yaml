@@ -272,6 +272,9 @@
           --namespace ingress-nginx \
           --set controller.service.type=NodePort \
           --set controller.nodeSelector."node-role\.kubernetes\.io/worker"=""
+          --set controller.metrics.enabled=true \
+          --set-string controller.podAnnotations."prometheus\.io/scrape"="true" \
+          --set-string controller.podAnnotations."prometheus\.io/port"="10254"
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
         HOME: /root

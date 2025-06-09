@@ -16,3 +16,11 @@ ansible-playbook -i dev_stack_dynamic_inventory_aws_ec2.yaml k8s_setup.yaml --pr
 helm install phonebook-app ./phonebook-chart
 
 * curl ipconfigme or curl https://ifconfig.me  IP adresi ogren!
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack
+helm install prometheus prometheus-community/prometheus
+helm install grafana grafana/grafana
+helm uninstall prometheus 
