@@ -10,6 +10,7 @@ ansible-playbook -i dev_stack_dynamic_inventory_aws_ec2.yaml k8s_setup.yaml --pr
 
 *** lokalde calistirmak icin asagidak komut 
 ansible-playbook -i dev_stack_dynamic_inventory_aws_ec2.yaml k8s_setup.yaml --private-key ~/.ssh/jonaspem.pem -u ubuntu  
+ansible-playbook -i dev_stack_dynamic_inventory_aws_ec2.yaml k8s_setup.yaml --private-key ~/.ssh/jonaspem.pem -u ubuntu -e 'ansible_ssh_common_args="-o StrictHostKeyChecking=no"'
 
 *
 helm install phonebook-app ./phonebook-chart
