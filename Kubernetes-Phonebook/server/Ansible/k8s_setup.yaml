@@ -278,3 +278,21 @@
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
         HOME: /root
+
+    - name: Add prometheus-community Helm repo
+      shell: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+      environment:
+        HOME: /root
+
+    - name: Install kube-prometheus-stack (Prometheus + Grafana)
+      shell: |
+        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+          --namespace monitoring \
+          --create-namespace \
+          --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+          --set grafana.adminPassword=admin \
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+        HOME: /root
