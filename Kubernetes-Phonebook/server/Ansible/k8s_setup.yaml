@@ -270,7 +270,7 @@
       shell: |
         helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
           --namespace ingress-nginx \
-          --set controller.service.type=NodePort \
+          --set controller.service.type=LoadBalancer \
           --set controller.nodeSelector."node-role\.kubernetes\.io/worker"="" \
           --set controller.metrics.enabled=true \
           --set-string controller.podAnnotations."prometheus\.io/scrape"="true" \
