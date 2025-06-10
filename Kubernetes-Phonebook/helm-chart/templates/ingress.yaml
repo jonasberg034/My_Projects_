@@ -9,7 +9,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /
+      - path: /app
         pathType: Prefix
         backend:
           service:
@@ -27,13 +27,3 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: grafana
-            port:
-              number: 80
-      - path: /prometheus
-        pathType: Prefix
-        backend:
-          service:
-            name: prometheus-server
-            port:
-              number: 80
