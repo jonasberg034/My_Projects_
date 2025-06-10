@@ -148,6 +148,8 @@ resource "aws_iam_role_policy" "ec2_elb_permissions" {
           "ec2:CreateNetworkInterface",
           "ec2:DeleteNetworkInterface",
           "ec2:DescribeTags",
+          "ec2:AttachNetworkInterface",
+          "ec2:Describe*",
           "elasticloadbalancing:*"
         ]
         Resource = "*"
