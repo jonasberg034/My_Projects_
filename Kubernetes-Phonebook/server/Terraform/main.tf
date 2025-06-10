@@ -117,23 +117,43 @@ resource "aws_security_group" "petclinic_kube_master_sg" {
 }
 
 resource "aws_iam_role" "petclinic_master_server_s3_role" {
-  name               = "petclinic_master_server_role"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
+  name = "petclinic_master_server_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Effect = "Allow"
+        Sid = ""
+      }
+    ]
+  })
 }
-EOF
 
+resource "aws_iam_role_policy" "ec2_elb_permissions" {
+  name = "ec2-elb-permissions"
+  role = aws_iam_role.petclinic_master_server_s3_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:CreateNetworkInterface",
+          "ec2:DeleteNetworkInterface",
+          "ec2:DescribeTags",
+          "elasticloadbalancing:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "s3_read_only" {
@@ -166,6 +186,7 @@ resource "aws_instance" "kube-master" {
 resource "aws_instance" "worker-1" {
     ami = var.ami_id
     instance_type = var.instance_type
+    iam_instance_profile = aws_iam_instance_profile.petclinic_master_server_profile2.name
     vpc_security_group_ids = [aws_security_group.petclinic_kube_worker_sg.id, aws_security_group.petclinic_mutual_sg.id]
     key_name = var.key_name
     subnet_id = var.subnet_id   # select own subnet_id of us-east-1a
@@ -179,21 +200,22 @@ resource "aws_instance" "worker-1" {
     }
 }
 
- resource "aws_instance" "worker-2" {
-    ami = var.ami_id
-    instance_type = var.instance_type
-    vpc_security_group_ids = [aws_security_group.petclinic_kube_worker_sg.id, aws_security_group.petclinic_mutual_sg.id]
-    key_name = var.key_name
-     subnet_id = var.subnet_id   # select own subnet_id of us-east-1a
-    availability_zone = var.availability_zone
-    tags = {
-        Name = "worker-2"
-        Project = "tera-kube-ans"
-        Role = "worker"
-        Id = "2"
-        environment = "dev"
-    }
-}
+# resource "aws_instance" "worker-2" {
+#    ami = var.ami_id
+#    instance_type = var.instance_type
+#    iam_instance_profile = aws_iam_instance_profile.petclinic_master_server_profile2.name
+#    vpc_security_group_ids = [aws_security_group.petclinic_kube_worker_sg.id, aws_security_group.petclinic_mutual_sg.id]
+#    key_name = var.key_name
+#     subnet_id = var.subnet_id   # select own subnet_id of us-east-1a
+#    availability_zone = var.availability_zone
+#    tags = {
+#        Name = "worker-2"
+#        Project = "tera-kube-ans"
+#        Role = "worker"
+#        Id = "2"
+#        environment = "dev"
+#    }
+#}
 
 output kube-master-ip {
   value       = aws_instance.kube-master.public_ip
@@ -207,8 +229,8 @@ output worker-1-ip {
   description = "public ip of the worker-1"
 }
 
-output worker-2-ip {
-  value       = aws_instance.worker-2.public_ip
-  sensitive   = false
-  description = "public ip of the worker-2"
-}
+#output worker-2-ip {
+#  value       = aws_instance.worker-2.public_ip
+#  sensitive   = false
+#  description = "public ip of the worker-2"
+#}
